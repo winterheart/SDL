@@ -2,8 +2,26 @@ if(${CMAKE_CURRENT_SOURCE_DIR} STREQUAL ${CMAKE_CURRENT_BINARY_DIR})
   message(FATAL_ERROR "Prevented in-tree build. Please create a build directory outside of the SDL source code and run \"cmake -S ${CMAKE_SOURCE_DIR} -B .\" from there")
 endif()
 
-cmake_minimum_required(VERSION 3.0.0)
-project(SDL2 C CXX)
+cmake_minimum_required(VERSION 3.11.0)
+# General settings
+# Project's version (x.y.z) is divided into 3 parts:
+# SDL2_VERSION_MAJOR - x
+# SDL2_VERSION_MINOR - y
+# SDL2_VERSION_PATCH - z
+# Edit include/SDL_version.h and change the version, then:
+#   SDL2_VERSION_PATCH += 1;
+#   SDL2_INTERFACE_AGE += 1;
+#   SDL2_BINARY_AGE += 1;
+# if any functions have been added, set SDL2_INTERFACE_AGE to 0.
+# if backwards compatibility has been broken,
+# set SDL2_BINARY_AGE and SDL2_INTERFACE_AGE to 0.
+project(SDL2 LANGUAGES C CXX VERSION 2.0.20)
+set(SDL2_INTERFACE_AGE 2)
+set(SDL2_BINARY_AGE 20)
+
+# the following should match the versions in Xcode project file:
+set(DYLIB_CURRENT_VERSION 19.2.0)
+set(DYLIB_COMPATIBILITY_VERSION 1.0.0)
 
 if (HAIKU)
   set(LINKER_LANGUAGE CXX)
@@ -18,7 +36,6 @@ endif()
 add_library(sdl-build-options INTERFACE)
 
 if(WINDOWS_STORE)
-  cmake_minimum_required(VERSION 3.11.0)
   target_compile_definitions(sdl-build-options INTERFACE "-DSDL_BUILDING_WINRT=1")
   target_compile_options(sdl-build-options INTERFACE "-ZW")
 endif()
@@ -56,24 +73,6 @@ set(CMAKE_MODULE_PATH "${SDL2_SOURCE_DIR}/cmake")
 include(${SDL2_SOURCE_DIR}/cmake/macros.cmake)
 include(${SDL2_SOURCE_DIR}/cmake/sdlchecks.cmake)
 
-# General settings
-# Edit include/SDL_version.h and change the version, then:
-#   SDL_MICRO_VERSION += 1;
-#   SDL_INTERFACE_AGE += 1;
-#   SDL_BINARY_AGE += 1;
-# if any functions have been added, set SDL_INTERFACE_AGE to 0.
-# if backwards compatibility has been broken,
-# set SDL_BINARY_AGE and SDL_INTERFACE_AGE to 0.
-set(SDL_MAJOR_VERSION 2)
-set(SDL_MINOR_VERSION 0)
-set(SDL_MICRO_VERSION 20)
-set(SDL_INTERFACE_AGE 2)
-set(SDL_BINARY_AGE 20)
-set(SDL_VERSION "${SDL_MAJOR_VERSION}.${SDL_MINOR_VERSION}.${SDL_MICRO_VERSION}")
-# the following should match the versions in Xcode project file:
-set(DYLIB_CURRENT_VERSION 19.2.0)
-set(DYLIB_COMPATIBILITY_VERSION 1.0.0)
-
 # Set defaults preventing destination file conflicts
 set(SDL_CMAKE_DEBUG_POSTFIX "d"
     CACHE STRING "Name suffix for debug builds")
@@ -81,11 +80,11 @@ set(SDL_CMAKE_DEBUG_POSTFIX "d"
 mark_as_advanced(CMAKE_IMPORT_LIBRARY_SUFFIX SDL_CMAKE_DEBUG_POSTFIX)
 
 # Calculate a libtool-like version number
-math(EXPR LT_CURRENT "${SDL_MICRO_VERSION} - ${SDL_INTERFACE_AGE}")
-math(EXPR LT_AGE "${SDL_BINARY_AGE} - ${SDL_INTERFACE_AGE}")
-math(EXPR LT_MAJOR "${LT_CURRENT}- ${LT_AGE}")
-set(LT_REVISION "${SDL_INTERFACE_AGE}")
-set(LT_RELEASE "${SDL_MAJOR_VERSION}.${SDL_MINOR_VERSION}")
+math(EXPR LT_CURRENT "${SDL2_VERSION_PATCH} - ${SDL2_INTERFACE_AGE}")
+math(EXPR LT_AGE "${SDL2_BINARY_AGE} - ${SDL2_INTERFACE_AGE}")
+math(EXPR LT_MAJOR "${LT_CURRENT} - ${LT_AGE}")
+set(LT_REVISION "${SDL2_INTERFACE_AGE}")
+set(LT_RELEASE "${SDL2_VERSION_MAJOR}.${SDL2_VERSION_MINOR}")
 set(LT_VERSION "${LT_MAJOR}.${LT_AGE}.${LT_REVISION}")
 
 #message(STATUS "${LT_VERSION} :: ${LT_AGE} :: ${LT_REVISION} :: ${LT_CURRENT} :: ${LT_RELEASE}")
@@ -231,14 +230,6 @@ if(APPLE OR ARCH_64 OR MSVC_CLANG)
 endif()
 if(UNIX OR MINGW OR MSYS OR (USE_CLANG AND NOT WINDOWS) OR VITA OR PSP)
   set(OPT_DEF_LIBC ON)
-endif()
-
-if(NOT ("$ENV{CFLAGS}" STREQUAL ""))
-  if(CMAKE_VERSION VERSION_LESS 3.11.0)
-     message(WARNING "SDL's CMakeLists.txt no longer checks the CFLAGS environment.")
-     message(WARNING "Please use CMake's CMAKE_C_FLAGS and CMAKE_BUILD_TYPE variables directly.")
-     message(WARNING "Or upgrade to CMake >= 3.11.0, which respects the CFLAGS environment var.")
-  endif()
 endif()
 
 if(MSVC)
@@ -2866,7 +2857,7 @@ if(SDL_SHARED)
         DEFINE_SYMBOL BUILD_SDL)
     endif()
     set_target_properties(SDL2 PROPERTIES
-      VERSION ${SDL_VERSION}
+      VERSION ${SDL2_VERSION}
       SOVERSION ${LT_REVISION}
       OUTPUT_NAME "SDL2")
   endif()
@@ -2961,7 +2952,7 @@ endif ()
 
 include(CMakePackageConfigHelpers)
 write_basic_package_version_file("${CMAKE_BINARY_DIR}/SDL2ConfigVersion.cmake"
-  VERSION ${SDL_VERSION}
+  VERSION ${SDL2_VERSION}
   COMPATIBILITY AnyNewerVersion
 )
 
