@@ -73,12 +73,6 @@ set(CMAKE_MODULE_PATH "${SDL2_SOURCE_DIR}/cmake")
 include(${SDL2_SOURCE_DIR}/cmake/macros.cmake)
 include(${SDL2_SOURCE_DIR}/cmake/sdlchecks.cmake)
 
-# Set defaults preventing destination file conflicts
-set(SDL_CMAKE_DEBUG_POSTFIX "d"
-    CACHE STRING "Name suffix for debug builds")
-
-mark_as_advanced(CMAKE_IMPORT_LIBRARY_SUFFIX SDL_CMAKE_DEBUG_POSTFIX)
-
 # Calculate a libtool-like version number
 math(EXPR LT_CURRENT "${SDL2_VERSION_PATCH} - ${SDL2_INTERFACE_AGE}")
 math(EXPR LT_AGE "${SDL2_BINARY_AGE} - ${SDL2_INTERFACE_AGE}")
@@ -1515,8 +1509,8 @@ elseif(WINDOWS)
     file(GLOB WINRT_MISC_SOURCES ${SDL2_SOURCE_DIR}/src/misc/winrt/*.cpp)
     set(SOURCE_FILES ${SOURCE_FILES} ${WINRT_MISC_SOURCES})
   else()
-  file(GLOB MISC_SOURCES ${SDL2_SOURCE_DIR}/src/misc/windows/*.c)
-  set(SOURCE_FILES ${SOURCE_FILES} ${MISC_SOURCES})
+    file(GLOB MISC_SOURCES ${SDL2_SOURCE_DIR}/src/misc/windows/*.c)
+    set(SOURCE_FILES ${SOURCE_FILES} ${MISC_SOURCES})
   endif()
   set(HAVE_SDL_MISC TRUE)
 
@@ -2822,9 +2816,6 @@ if(NOT WINDOWS_STORE AND NOT SDL2_DISABLE_SDL2MAIN)
   add_library(SDL2::SDL2main ALIAS SDL2main)
   target_include_directories(SDL2main BEFORE PRIVATE "${SDL2_BINARY_DIR}/include")
   target_include_directories(SDL2main PUBLIC "$<BUILD_INTERFACE:${SDL2_SOURCE_DIR}/include>" $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}> $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/SDL2>)
-  if (NOT ANDROID)
-    set_target_properties(SDL2main PROPERTIES DEBUG_POSTFIX "${SDL_CMAKE_DEBUG_POSTFIX}")
-  endif()
 endif()
 
 if(ANDROID)
@@ -2875,9 +2866,6 @@ if(SDL_SHARED)
   target_include_directories(SDL2 PUBLIC "$<BUILD_INTERFACE:${SDL2_SOURCE_DIR}/include>;$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>;$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/SDL2>")
   # This picks up all the compiler options and such we've accumulated up to here.
   target_link_libraries(SDL2 PRIVATE $<BUILD_INTERFACE:sdl-build-options>)
-  if(NOT ANDROID)
-    set_target_properties(SDL2 PROPERTIES DEBUG_POSTFIX "${SDL_CMAKE_DEBUG_POSTFIX}")
-  endif()
 endif()
 
 if(SDL_STATIC)
@@ -2906,9 +2894,6 @@ if(SDL_STATIC)
   target_include_directories(SDL2-static PUBLIC "$<BUILD_INTERFACE:${SDL2_SOURCE_DIR}/include>" $<INSTALL_INTERFACE:include> $<INSTALL_INTERFACE:include/SDL2>)
   # This picks up all the compiler options and such we've accumulated up to here.
   target_link_libraries(SDL2-static PRIVATE $<BUILD_INTERFACE:sdl-build-options>)
-  if(NOT ANDROID)
-    set_target_properties(SDL2-static PROPERTIES DEBUG_POSTFIX "${SDL_CMAKE_DEBUG_POSTFIX}")
-  endif()
 endif()
 
 ##### Tests #####
@@ -2998,11 +2983,6 @@ list(APPEND INCLUDE_FILES ${BIN_INCLUDE_FILES})
 install(FILES ${INCLUDE_FILES} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/SDL2)
 
 string(TOUPPER "${CMAKE_BUILD_TYPE}" UPPER_BUILD_TYPE)
-if (UPPER_BUILD_TYPE MATCHES DEBUG)
-  set(SOPOSTFIX "${SDL_CMAKE_DEBUG_POSTFIX}")
-else()
-  set(SOPOSTFIX "")
-endif()
 
 if(NOT (WINDOWS OR CYGWIN) OR MINGW)
   if(SDL_SHARED)
@@ -3011,9 +2991,9 @@ if(NOT (WINDOWS OR CYGWIN) OR MINGW)
     if(NOT ANDROID AND NOT MINGW AND NOT OS2)
         install(CODE "
           execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
-            \"lib${SONAME}${SOPOSTFIX}${SOEXT}\" \"libSDL2${SOPOSTFIX}${SOEXT}\"
+            \"lib${SONAME}${SOEXT}\" \"libSDL2${SOEXT}\"
             WORKING_DIRECTORY \"${SDL2_BINARY_DIR}\")")
-        install(FILES ${SDL2_BINARY_DIR}/libSDL2${SOPOSTFIX}${SOEXT} DESTINATION "${CMAKE_INSTALL_LIBDIR}")
+        install(FILES ${SDL2_BINARY_DIR}/libSDL2${SOEXT} DESTINATION "${CMAKE_INSTALL_LIBDIR}")
     endif()
   endif()
   if(FREEBSD)
