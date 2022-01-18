@@ -94,10 +94,6 @@ else()
   set(ARCH_64 FALSE)
   set(PROCESSOR_ARCH "x86")
 endif()
-set(LIBNAME SDL2)
-if(NOT LIBTYPE)
-  set(LIBTYPE SHARED)
-endif()
 
 # Get the platform
 if(WIN32)
